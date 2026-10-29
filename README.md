@@ -78,20 +78,22 @@ The corpus is generated from `fixtures/src/*.c` with a fresh P-256 test key:
   signed ELF with `-z execstack`
 - 6 bypass cases, each run under the gate and directly as a control
 
-Result on the build box (Linux 6.12.94+, Landlock ABI 6), `TIMING=50 scripts/measure.sh`:
+Results from two environments. Both use the same command:
+`TIMING=50 scripts/measure.sh`.
 
-| Metric | Threshold | Result |
-|---|---|---|
-| Signed ELFs that run | ≥ 95% | **50/50** |
-| Unsigned executions | 0 | **0/50** (50 denied, exit 126; all 50 run directly) |
-| Tampered executions | 0 | **0/20** (20 denied; all 20 run directly) |
-| Foreign-key executions | 0 | **0/10** |
-| Positive controls (strip/empty/garbage/execstack) | 0 run | **0/4** |
-| #9 bypasses + new ones that succeed under the gate | 0 | **0/6** (the direct control succeeds in 5/6) |
-| Wall time p50 / p95, gate vs direct (50 runs) | n/a | 3.19 / 4.22 ms vs 0.51 / 0.60 ms |
+| Metric | Threshold | Build box (Linux 6.12.94+, Landlock ABI 6) | CI `ubuntu-latest` (Linux 7.0.0-1017-azure, Landlock ABI 8), run [40817792882](https://github.com/federiconbaez/cortex9-sigstore-exec-gate/actions/runs/40817792882) |
+|---|---|---|---|
+| Signed ELFs that run | ≥ 95% | **50/50** | **50/50** |
+| Unsigned executions | 0 | **0/50** (50 denied, exit 126; all 50 run directly) | **0/50** (50 denied; 50 run directly) |
+| Tampered executions | 0 | **0/20** (20 denied; all 20 run directly) | **0/20** (20 denied; 20 run directly) |
+| Foreign-key executions | 0 | **0/10** | **0/10** |
+| Positive controls (strip/empty/garbage/execstack) | 0 run | **0/4** | **0/4** |
+| Bypasses that succeed under the gate | 0 | **0/6** (direct control succeeds in 5/6) | **0/6** (direct control 5/6) |
+| Wall time p50 / p95, gate vs direct (50 runs) | n/a | 3.19 / 4.22 ms vs 0.51 / 0.60 ms | 3.77 / 4.12 ms vs 0.43 / 0.49 ms |
 
-The CI run on GitHub Actions (`ubuntu-latest`) repeats the same measurement
-and uploads `corpus/results.json` as an artifact.
+The per-case JSON from CI is uploaded as the `measurement` artifact
+(`corpus/results.json`). The int80 direct control also reproduces on the CI
+kernel (`int80 direct control: pwned=true` in the test log).
 
 ### Bypass cases
 
