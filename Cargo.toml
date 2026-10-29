@@ -1,0 +1,32 @@
+[package]
+name = "sigstore-exec-gate"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+license = "Apache-2.0"
+description = "Exec gate: verifies a cosign-compatible blob signature over an ELF, then runs exactly the verified bytes under Landlock + seccomp (nested exec denied)"
+repository = "https://github.com/federiconbaez/cortex9-sigstore-exec-gate"
+keywords = ["sigstore", "cosign", "seccomp", "landlock", "provenance"]
+categories = ["command-line-utilities", "os::linux-apis"]
+authors = ["Federico Nicolas Báez Rizzo"]
+default-run = "sxg"
+
+[dependencies]
+anyhow = "1"
+base64 = "0.22"
+libc = "0.2"
+p256 = { version = "0.13", features = ["ecdsa", "pem", "pkcs8"] }
+rand_core = { version = "0.6", features = ["getrandom"] }
+sha2 = "0.10"
+
+[lib]
+name = "sxg"
+path = "src/lib.rs"
+
+[[bin]]
+name = "sxg"
+path = "src/main.rs"
+
+[[bin]]
+name = "sxg-measure"
+path = "src/bin/measure.rs"

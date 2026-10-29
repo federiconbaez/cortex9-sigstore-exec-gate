@@ -1,0 +1,43 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: fmt + clippy + test + medición + interop cosign
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+      - name: kernel / LSM
+        run: |
+          uname -a
+          cat /sys/kernel/security/lsm || true
+          cat /proc/sys/vm/memfd_noexec || true
+      - name: fmt
+        run: cargo fmt --all -- --check
+      - name: clippy
+        run: cargo clippy --all-targets -- -D warnings
+      - name: test (no skips; Landlock + seccomp user-notif required)
+        run: cargo test --release -- --nocapture
+      - name: medición completa
+        run: scripts/measure.sh corpus
+      - name: interop cosign v2.4.1 (sha256 fijado)
+        run: |
+          curl -sSL -o /tmp/cosign https://github.com/sigstore/cosign/releases/download/v2.4.1/cosign-linux-amd64
+          echo "8b24b946dd5809c6bd93de08033bcf6bc0ed7d336b7785787c080f574b89249b  /tmp/cosign" | sha256sum -c
+          chmod +x /tmp/cosign
+          SXG=target/release/sxg scripts/cosign-interop.sh /tmp/cosign
+      - uses: actions/upload-artifact@v4
+        with:
+          name: measurement
+          path: corpus/results.json
